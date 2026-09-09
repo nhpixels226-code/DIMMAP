@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>DIMMAP — Dimensionnement Solaire</title>
+  <link rel="stylesheet" href="css/style.css?v=29">
+</head>
+<body>
+<div class="app" id="app">
+
+  <!-- ═══ HEADER ═══ -->
+  <header class="app-header">
+    <div class="header-row">
+      <div>
+        <div class="logo">DIM<span>MAP</span></div>
+        <div class="subtitle">Dimensionnement Solaire PV</div>
+      </div>
+      <div class="mode-toggle">
+        <button id="btnSimple" class="active" onclick="setMode('simple')">Simple</button>
+        <button id="btnExpert" onclick="setMode('expert')">Expert</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ═══ STEPPER ═══ -->
+  <nav class="stepper" id="stepper">
+    <div class="step-dot active" data-step="0"><div class="dot">1</div><div class="step-label">Accueil</div></div>
+    <div class="step-dot" data-step="1"><div class="dot">2</div><div class="step-label">Appareils</div></div>
+    <div class="step-dot" data-step="2"><div class="dot">3</div><div class="step-label">Site</div></div>
+    <div class="step-dot" data-step="3"><div class="dot">4</div><div class="step-label">Equipement</div></div>
+    <div class="step-dot" data-step="4"><div class="dot">5</div><div class="step-label">Resultats</div></div>
+    <div class="step-dot" data-step="5"><div class="dot">6</div><div class="step-label">Couts</div></div>
+  </nav>
+
+  <!-- ═══ CONTENT ═══ -->
+  <main class="content">
+
+    <!-- ── ECRAN 0: ACCUEIL ── -->
+    <div class="screen active" id="screen-0">
+      <div class="welcome-hero">
+        <h2>Nouveau projet</h2>
+        <p>Choisissez le type d'installation a dimensionner</p>
+      </div>
+      <div class="install-type-cards">
+        <div class="install-card selected" data-type="offgrid" onclick="selectInstallType('offgrid')">
+          <div class="ic-icon">&#9728;</div>
+          <div class="ic-title">Off-grid</div>
+          <div class="ic-desc">Autonome, sans connexion au reseau</div>
+        </div>
+        <div class="install-card" data-type="hybrid" onclick="selectInstallType('hybrid')">
+          <div class="ic-icon">&#9889;</div>
+          <div class="ic-title">Hybride</div>
+          <div class="ic-desc">Solaire + reseau electrique</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="form-group">
+          <label class="form-label">Nom du projet</label>
+          <input type="text" id="projectName" placeholder="Ex: Maison Ouaga, Clinique Bobo..." value="">
+        </div>
+      </div>
+      <button class="btn btn-catalog" onclick="openCatalog()">
+        Catalogue equipements
+      </button>
+      <button class="btn btn-history" onclick="openHistory()">
+        Historique des projets <span id="historyCount" class="history-badge"></span>
+      </button>
+    </div>
+
+    <!-- ── ECRAN 1: BILAN ENERGETIQUE ── -->
+    <div class="screen" id="screen-1">
+      <div class="card">
+        <div class="card-title">Vos appareils electriques</div>
+        <div id="applianceList"></div>
+        <button class="btn btn-primary mt-8" onclick="openAddModal()" style="width:100%">
+          + Ajouter un appareil
+        </button>
+      </div>
+      <div class="summary-bar" id="energySummary">
+        <div>
+          <div class="label">Consommation journaliere</div>
+        </div>
+        <div class="text-right">
+          <div class="value" id="totalEnergy">0 Wh/j</div>
+        </div>
+      </div>
+      <div class="summary-bar mt-8" style="background: #FEF3C7; border-color: #F59E0B;">
+        <div>
+          <div class="label" style="color: #92400E;">Puissance simultanee</div>
+        </div>
+        <div class="text-right">
+          <div class="value" style="color: #92400E;" id="totalPower">0 W</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── ECRAN 2: PARAMETRES DU SITE ── -->
+    <div class="screen" id="screen-2">
+      <div class="card">
+        <div class="card-title">Localisation</div>
+        <div class="form-group">
+          <label class="form-label">Pays</label>
+          <select id="selCountry" onchange="onCountryChange()">
+            <option value="">-- Choisir un pays --</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Ville / Region</label>
+          <select id="selCity" onchange="onCityChange()">
+            <option value="">-- Choisir une ville --</option>
+          </select>
+        </div>
+        <div class="input-row mt-8">
+          <div>
+            <div class="form-label">Irradiation (HSP)</div>
+            <div style="font-size: 22px; font-weight: 800; color: var(--primary);" id="dispHSP">—</div>
+            <div class="fs-xs color-text-sec">kWh/m²/j (pire mois)</div>
+          </div>
+          <div>
+            <div class="form-label">Zone climatique</div>
+            <div style="font-size: 14px; font-weight: 700;" id="dispZone">—</div>
+            <div class="fs-xs" id="dispZoneDetail" style="color: var(--text-sec);"></div>
+          </div>
+        </div>
+        <div class="form-group expert-only mt-8">
+          <label class="form-label">HSP personnalise (kWh/m²/j)</label>
+          <input type="number" id="customHSP" step="0.1" min="1" max="8" placeholder="Laisser vide = auto">
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Systeme</div>
+        <div class="form-group">
+          <label class="form-label">Tension du systeme</label>
+          <div class="chip-group" id="voltageChips">
+            <div class="chip" data-v="12" onclick="selectVoltage(12)">12V</div>
+            <div class="chip selected" data-v="24" onclick="selectVoltage(24)">24V</div>
+            <div class="chip" data-v="48" onclick="selectVoltage(48)">48V</div>
+          </div>
+          <div class="form-hint" id="voltageHint">Recommande pour votre consommation</div>
+        </div>
+        <div class="form-group" id="autonomyGroup">
+          <label class="form-label">Autonomie souhaitee</label>
+          <div style="display:flex; align-items:center; gap:12px;">
+            <input type="range" id="autonomySlider" min="1" max="5" value="2" step="1" style="flex:1" oninput="updateAutonomyLabel()">
+            <span id="autonomyLabel" style="font-size:18px; font-weight:700; color:var(--primary); min-width:60px; text-align:center;">2 jours</span>
+          </div>
+        </div>
+        <div class="form-group" id="cutoffGroup" style="display:none">
+          <label class="form-label">Duree de coupure moyenne</label>
+          <div style="display:flex; align-items:center; gap:12px;">
+            <input type="range" id="cutoffSlider" min="1" max="12" value="4" step="1" style="flex:1" oninput="updateCutoffLabel()">
+            <span id="cutoffLabel" style="font-size:18px; font-weight:700; color:var(--primary); min-width:60px; text-align:center;">4 h/j</span>
+          </div>
+        </div>
+        <div class="expert-only mt-8">
+          <div class="section-title">Rendements (η)</div>
+          <div class="input-row">
+            <div class="form-group">
+              <label class="form-label">Onduleur</label>
+              <input type="number" id="effInverter" value="0.90" step="0.01" min="0.80" max="0.99">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Cablage</label>
+              <input type="number" id="effCable" value="0.95" step="0.01" min="0.9" max="0.99">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Regulateur</label>
+              <input type="number" id="effRegulator" value="0.95" step="0.01" min="0.85" max="0.99">
+            </div>
+          </div>
+          <div class="section-title mt-8">Marges de securite (×)</div>
+          <div class="input-row">
+            <div class="form-group">
+              <label class="form-label">Regulateur</label>
+              <input type="number" id="marginRegulator" value="1.25" step="0.05" min="1.0" max="2.0">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Onduleur</label>
+              <input type="number" id="marginInverter" value="1.25" step="0.05" min="1.0" max="2.0">
+            </div>
+          </div>
+          <div class="section-title mt-8">Facteur climatique</div>
+          <div class="form-group">
+            <label class="form-label">Pertes (kLoss) — vide = auto selon zone</label>
+            <input type="number" id="customKLoss" step="0.01" min="0.40" max="1.00" placeholder="Auto">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── ECRAN 3: EQUIPEMENTS ── -->
+    <div class="screen" id="screen-3">
+      <div class="card" id="regulatorCard">
+        <div class="card-title">Regulateur de charge</div>
+        <div class="chip-group">
+          <div class="chip" data-reg="pwm" onclick="selectRegulator('pwm')">PWM</div>
+          <div class="chip selected" data-reg="mppt" onclick="selectRegulator('mppt')">MPPT</div>
+        </div>
+        <div class="form-hint" id="regHint">MPPT recommande : meilleur rendement, adapte la tension automatiquement</div>
+        <div class="form-hint mb-8 mt-8">Configuration recommandee selon vos besoins</div>
+        <div id="regulatorReco"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Panneau solaire</div>
+        <div class="form-hint mb-8">Choisissez une configuration de panneau adaptee a votre installation</div>
+        <div id="panelRecos"></div>
+        <input type="hidden" id="panelPower" value="300">
+        <input type="hidden" id="panelVmp" value="32.4">
+        <input type="hidden" id="panelImp" value="9.26">
+        <input type="hidden" id="panelVoc" value="39.7">
+      </div>
+
+      <div class="card">
+        <div class="card-title">Batterie</div>
+        <div class="form-group">
+          <label class="form-label">Technologie</label>
+          <select id="batteryType" onchange="onBatteryTypeChange()">
+            <option value="plomb">VV generique</option>
+            <option value="agm">Plomb AGM</option>
+            <option value="gel">Plomb Gel</option>
+            <option value="lfp" selected>Lithium LFP</option>
+            <option value="nmc">Lithium NMC</option>
+          </select>
+        </div>
+        <div class="form-hint mb-8 mt-8">Choisissez la capacite des batteries</div>
+        <div id="batteryRecos"></div>
+        <input type="hidden" id="batteryCapacity" value="200">
+        <input type="hidden" id="batteryVoltage" value="12">
+        <div class="expert-only mt-8">
+          <div class="section-title">Parametres batterie</div>
+          <div class="input-row">
+            <div class="form-group">
+              <label class="form-label">DoD (%)</label>
+              <input type="number" id="batteryDoD" value="80" step="5" min="20" max="100">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Efficacite (%)</label>
+              <input type="number" id="batteryEff" value="95" step="1" min="70" max="99">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Duree vie (ans)</label>
+              <input type="number" id="batteryLife" value="10" step="1" min="1" max="25">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" id="inverterCard">
+        <div class="card-title" id="inverterCardTitle">Onduleur / Convertisseur</div>
+        <div class="form-group" id="invTypeGroup">
+          <label class="form-label">Type d'equipement</label>
+          <div class="chip-group" id="invChipGroup">
+            <div class="chip" data-inv="convertisseur" onclick="selectInverterType('convertisseur')">Convertisseur</div>
+            <div class="chip" data-inv="onduleur_sinus" onclick="selectInverterType('onduleur_sinus')">Onduleur pur sinus</div>
+            <div class="chip" data-inv="onduleur" onclick="selectInverterType('onduleur')">Onduleur hybride</div>
+          </div>
+          <div class="form-hint" id="invTypeHint"></div>
+        </div>
+        <div class="form-hint mb-8 mt-8">Configuration recommandee selon vos besoins</div>
+        <div id="inverterReco"></div>
+        <input type="hidden" id="inverterType" value="onduleur">
+        <input type="hidden" id="inverterModelPrice" value="0">
+      </div>
+    </div>
+
+    <!-- ── ECRAN 4: RESULTATS ── -->
+    <div class="screen" id="screen-4">
+      <div id="warningsContainer"></div>
+
+      <div class="section-title">Synthese</div>
+      <div class="result-grid" id="resultsSummary"></div>
+
+      <div class="section-title">Panneaux solaires</div>
+      <div class="card" id="resultsPanels"></div>
+
+      <div class="section-title">Batteries</div>
+      <div class="card" id="resultsBatteries"></div>
+
+      <div class="section-title" id="resultsRegInvTitle">Regulateur &amp; Onduleur</div>
+      <div class="card" id="resultsRegInv"></div>
+
+      <div class="section-title">Production vs Consommation</div>
+      <div class="card" id="resultsProdBar"></div>
+
+      <div class="expert-only mt-16">
+        <div class="section-title">Formules utilisees</div>
+        <div class="card" id="formulasDisplay"></div>
+      </div>
+    </div>
+
+    <!-- ── ECRAN 5: COUTS ── -->
+    <div class="screen" id="screen-5">
+      <div class="card expert-only mb-8">
+        <div class="card-title">Frais annexes (%)</div>
+        <div class="input-row">
+          <div class="form-group">
+            <label class="form-label">Main d'oeuvre</label>
+            <input type="number" id="moPercent" value="15" step="1" min="0" max="50" onchange="runCostCalculation()">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Transport</label>
+            <input type="number" id="transportPercent" value="3" step="1" min="0" max="30" onchange="runCostCalculation()">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Imprevus</label>
+            <input type="number" id="contingencyPercent" value="5" step="1" min="0" max="30" onchange="runCostCalculation()">
+          </div>
+        </div>
+      </div>
+      <div class="card expert-only mb-8">
+        <div class="card-title">Projection duree de vie</div>
+        <div class="input-row">
+          <div class="form-group">
+            <label class="form-label">Vie systeme (ans)</label>
+            <input type="number" id="systemLifeYears" value="25" step="1" min="5" max="40" onchange="runCostCalculation()">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Vie onduleur (ans)</label>
+            <input type="number" id="inverterLifeYears" value="10" step="1" min="3" max="25" onchange="runCostCalculation()">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Vie regulateur (ans)</label>
+            <input type="number" id="regulatorLifeYears" value="15" step="1" min="3" max="25" onchange="runCostCalculation()">
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Budget estimatif</div>
+        <div style="overflow-x:auto;">
+          <table class="cost-table" id="costTable"></table>
+        </div>
+      </div>
+
+      <div id="costProjection"></div>
+
+      <div class="section-title">Indicateurs</div>
+      <div class="result-grid" id="costIndicators"></div>
+
+      <button class="btn btn-close-project mt-16" onclick="closeProject()">
+        Cloturer et sauvegarder le projet
+      </button>
+    </div>
+
+  </main>
+
+  <!-- ═══ BOTTOM NAV ═══ -->
+  <div class="bottom-nav">
+    <button class="btn btn-secondary" id="btnPrev" onclick="prevStep()">Retour</button>
+    <button class="btn btn-primary" id="btnNext" onclick="nextStep()">Suivant</button>
+  </div>
+
+</div>
+
+<!-- ═══ MODAL AJOUT APPAREIL ═══ -->
+<div class="modal-overlay" id="addModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Ajouter un appareil</div>
+      <button class="modal-close" onclick="closeAddModal()">&times;</button>
+    </div>
+    <div class="cat-tabs" id="catTabs"></div>
+    <div id="presetList"></div>
+    <div style="margin-top:16px; padding-top:12px; border-top:1px solid var(--border);">
+      <div class="modal-title" style="font-size:14px; margin-bottom:10px;">Appareil personnalise</div>
+      <div class="form-group">
+        <input type="text" id="customAppName" placeholder="Nom de l'appareil">
+      </div>
+      <div class="input-row-3 mt-8">
+        <div class="form-group">
+          <label class="form-label">Puissance (W)</label>
+          <input type="number" id="customAppPower" min="1" placeholder="W">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Quantite</label>
+          <input type="number" id="customAppQty" value="1" min="1">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Heures/jour</label>
+          <input type="number" id="customAppHours" min="0.1" max="24" step="0.5" placeholder="h">
+        </div>
+      </div>
+      <div class="form-group mt-8">
+        <label class="form-label">Type de charge</label>
+        <select id="customAppMotor">
+          <option value="1.0">Resistif / electronique (sans moteur)</option>
+          <option value="2.0">Petit moteur (mixeur, perceuse)</option>
+          <option value="3.5">Moteur moyen (clim, machine a laver)</option>
+          <option value="5.0">Gros moteur (frigo, congelateur, compresseur)</option>
+        </select>
+      </div>
+      <button class="btn btn-accent mt-8" style="width:100%;" onclick="addCustomAppliance()">Ajouter cet appareil</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ MODAL HISTORIQUE ═══ -->
+<div class="modal-overlay" id="historyModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Projets clotures</div>
+      <button class="modal-close" onclick="closeHistory()">&times;</button>
+    </div>
+    <div id="historyList"></div>
+  </div>
+</div>
+
+<!-- ═══ MODAL DETAIL PROJET ═══ -->
+<div class="modal-overlay" id="historyDetailModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Fiche du projet</div>
+      <button class="modal-close" onclick="closeHistoryDetail()">&times;</button>
+    </div>
+    <div id="historyDetailContent"></div>
+  </div>
+</div>
+
+<!-- ═══ MODAL CATALOGUE ═══ -->
+<div class="modal-overlay" id="catalogModal">
+  <div class="modal modal-catalog">
+    <div class="modal-header">
+      <div class="modal-title">Catalogue Felicity Solar</div>
+      <button class="modal-close" onclick="closeCatalog()">&times;</button>
+    </div>
+    <div class="catalog-tabs" id="catalogTabs"></div>
+    <div id="catalogContent"></div>
+    <div class="catalog-footer">
+      <div class="catalog-supplier">ASEC TECH-BF — Ouagadougou</div>
+      <div class="catalog-contact">(+226) 61 74 84 60 · (+226) 74 34 03 02</div>
+    </div>
+  </div>
+</div>
+
+<script src="js/data.js?v=29"></script>
+<script src="js/engine.js?v=29"></script>
+<script src="js/app.js?v=29"></script>
+</body>
+</html>
