@@ -1147,8 +1147,9 @@ function renderCosts(c) {
     const qtyCell = isAccessory
       ? `<input type="number" class="qty-input" value="${it.qty}" min="0" step="1" onchange="onQtyChange(${i}, this.value)">`
       : `${it.qty}`;
+    const refLine = it.ref ? `<div style="font-size:11px;color:var(--text-sec);font-weight:400;">${it.ref}${it.specs ? ' · ' + it.specs : ''}</div>` : '';
     html += `<tr>
-      <td>${it.label}</td>
+      <td>${it.label}${refLine}</td>
       <td>${qtyCell}</td>
       <td><input type="number" class="price-input" value="${it.price}" min="0" step="1000" data-idx="${i}" onchange="onPriceChange(${i}, this.value)"></td>
       <td class="row-total">${formatPrice(it.total)}</td>
@@ -1241,8 +1242,66 @@ function onQtyChange(idx, value) {
 // ═══ EXPORT PDF ═══
 function exportPDF() {
   if (!state.results || !state.costs) return;
-  // Use browser print as PDF
   const printContent = generatePrintHTML();
+  const w = window.open('', '_blank');
+  w.document.write(printContent);
+  w.document.close();
+  setTimeout(() => w.print(), 500);
+}
+
+function exportBOM() {
+  if (!state.results || !state.costs) return;
+  const c = state.costs;
+  const r = state.results;
+  const input = getInput();
+  const projectName = document.getElementById('projectName').value || 'Projet sans nom';
+  const cityName = state.city ? `${state.city.name}, ${state.country.name}` : '';
+  const isOffgrid = input.installationType === 'offgrid';
+  const mainItems = c.items.filter(it => !ACCESSORY_KEYS.includes(it.key));
+  const accItems = c.items.filter(it => ACCESSORY_KEYS.includes(it.key) && it.qty > 0 && it.price > 0);
+
+  let bomHTML = mainItems.map(it =>
+    `<tr><td>${it.ref || it.label}</td><td>${it.specs || ''}</td><td style="text-align:center">${it.qty}</td><td style="text-align:right">${formatPrice(it.price)}</td><td style="text-align:right;font-weight:600">${formatPrice(it.total)}</td></tr>`
+  ).join('');
+  if (accItems.length > 0) {
+    bomHTML += accItems.map(it =>
+      `<tr><td>${it.label}</td><td></td><td style="text-align:center">${it.qty}</td><td style="text-align:right">${formatPrice(it.price)}</td><td style="text-align:right">${formatPrice(it.total)}</td></tr>`
+    ).join('');
+  }
+  const matTotal = c.items.reduce((s, it) => s + it.total, 0);
+
+  const configInfo = `${r.totalPanels} panneaux (${r.panelsInSeries}S×${r.stringsInParallel}P) · ${r.totalBatteries} batteries (${r.batteriesInSeries}S×${r.batteriesInParallel}P) · ${input.vSystem}V`;
+
+  const printContent = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>BOM - ${projectName}</title>
+  <style>
+    body{font-family:Arial,sans-serif;font-size:12px;color:#1a1a1a;max-width:750px;margin:0 auto;padding:20px;}
+    h1{font-size:18px;color:#1565C0;margin:0 0 2px;}
+    h2{font-size:13px;color:#1565C0;margin:16px 0 6px;border-bottom:2px solid #E3F2FD;padding-bottom:3px;}
+    .meta{color:#666;font-size:11px;margin-bottom:12px;}
+    .config{background:#E3F2FD;padding:8px 12px;border-radius:4px;font-size:11px;color:#1565C0;margin-bottom:12px;}
+    table{width:100%;border-collapse:collapse;margin:6px 0;font-size:11px;}
+    th{background:#1565C0;color:#fff;padding:5px 8px;text-align:left;font-size:10px;}
+    td{padding:4px 8px;border-bottom:1px solid #e0e0e0;}
+    .total-row td{border-top:2px solid #1565C0;font-weight:700;font-size:12px;color:#1565C0;}
+    .note{font-size:10px;color:#666;margin-top:12px;font-style:italic;}
+    @media print{body{padding:0;} @page{margin:12mm;}}
+  </style></head><body>
+  <h1>DIMMAP — Liste de materiel (BOM)</h1>
+  <div class="meta">${projectName}${cityName ? ' | ' + cityName : ''} | ${isOffgrid ? 'Off-grid' : 'Hybride'} | ${new Date().toLocaleDateString('fr-FR')}</div>
+  <div class="config">${configInfo}</div>
+
+  <h2>Equipements</h2>
+  <table><thead><tr><th>Designation</th><th>Specifications</th><th style="text-align:center">Qte</th><th style="text-align:right">Prix unit.</th><th style="text-align:right">Total</th></tr></thead><tbody>
+  ${bomHTML}
+  <tr class="total-row"><td colspan="4">TOTAL MATERIEL</td><td style="text-align:right">${formatPrice(matTotal)}</td></tr>
+  </tbody></table>
+
+  <div class="note">Prix en FCFA — Ce document est une liste de materiel a titre indicatif. Verifiez les disponibilites et prix aupres de votre fournisseur.</div>
+  <div style="margin-top:20px;border-top:1px solid #e0e0e0;padding-top:6px;font-size:10px;color:#999;">
+    Genere par DIMMAP — Dimensionnement Solaire PV | ${new Date().toLocaleDateString('fr-FR')}
+  </div>
+  </body></html>`;
+
   const w = window.open('', '_blank');
   w.document.write(printContent);
   w.document.close();

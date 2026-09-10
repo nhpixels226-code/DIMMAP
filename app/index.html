@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <title>DIMMAP — Dimensionnement Solaire</title>
-  <link rel="stylesheet" href="css/style.css?v=29">
+  <link rel="stylesheet" href="css/style.css?v=30">
 </head>
 <body>
 <div class="app" id="app">
@@ -340,9 +340,10 @@
       <div class="section-title">Indicateurs</div>
       <div class="result-grid" id="costIndicators"></div>
 
-      <button class="btn btn-close-project mt-16" onclick="closeProject()">
-        Cloturer et sauvegarder le projet
-      </button>
+      <div style="display:flex;gap:8px;margin-top:16px;">
+        <button class="btn btn-secondary" style="flex:1;" onclick="exportBOM()">Exporter BOM</button>
+        <button class="btn btn-close-project" style="flex:1;" onclick="closeProject()">Cloturer le projet</button>
+      </div>
     </div>
 
   </main>
@@ -435,8 +436,8 @@
   </div>
 </div>
 
-<script src="js/data.js?v=29"></script>
-<script src="js/engine.js?v=29"></script>
-<script src="js/app.js?v=29"></script>
+<script src="js/data.js?v=30"></script>
+<script src="js/engine.js?v=30"></script>
+<script src="js/app.js?v=30"></script>
 </body>
 </html>

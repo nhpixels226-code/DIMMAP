@@ -305,33 +305,53 @@ const Engine = {
     const batteryPrice = input.catalogBatteryPrice || (prices[battKey] || prices.battery_plomb).price;
 
     let inverterPrice = input.catalogInverterPrice || prices.inverter.price;
-    if (!input.catalogInverterPrice) {
-      const invCatalog = input.inverterType === 'onduleur_sinus' && typeof INVERTER_SINUS_MODELS !== 'undefined'
-        ? INVERTER_SINUS_MODELS
-        : input.inverterType === 'convertisseur' && typeof CONVERTER_MODELS !== 'undefined'
-        ? CONVERTER_MODELS
-        : typeof INVERTER_MODELS !== 'undefined' ? INVERTER_MODELS : [];
-      const invMatch = invCatalog.filter(m => m.power >= results.inverterPeak)
-        .sort((a, b) => a.power - b.power)[0];
-      if (invMatch) inverterPrice = invMatch.price;
-    }
+    const invCatalog = input.inverterType === 'onduleur_sinus' && typeof INVERTER_SINUS_MODELS !== 'undefined'
+      ? INVERTER_SINUS_MODELS
+      : input.inverterType === 'convertisseur' && typeof CONVERTER_MODELS !== 'undefined'
+      ? CONVERTER_MODELS
+      : typeof INVERTER_MODELS !== 'undefined' ? INVERTER_MODELS : [];
+    const invMatch = invCatalog.filter(m => m.power >= results.inverterPeak)
+      .sort((a, b) => a.power - b.power)[0] || null;
+    if (!input.catalogInverterPrice && invMatch) inverterPrice = invMatch.price;
 
     let regulatorPrice = (prices[regKey] || prices.regulator_mppt).price;
+    let regMatch = null;
     if (input.regulatorType === 'mppt' && typeof REGULATOR_MODELS !== 'undefined') {
-      const regMatch = REGULATOR_MODELS.find(m => m.current >= results.regulatorCurrent);
+      regMatch = REGULATOR_MODELS.find(m => m.current >= results.regulatorCurrent);
       if (regMatch) regulatorPrice = regMatch.price;
     } else if (input.regulatorType === 'pwm' && typeof REGULATOR_PWM_MODELS !== 'undefined') {
-      const pwmMatch = REGULATOR_PWM_MODELS.find(m => m.current >= results.regulatorCurrent);
-      if (pwmMatch) regulatorPrice = pwmMatch.price;
+      regMatch = REGULATOR_PWM_MODELS.find(m => m.current >= results.regulatorCurrent);
+      if (regMatch) regulatorPrice = regMatch.price;
     }
 
     const isOffgrid = input.installationType === 'offgrid';
 
+    const panelRef = (typeof PANEL_MODELS !== 'undefined')
+      ? PANEL_MODELS.find(p => p.power === input.panelPower) : null;
+    let battRef = null;
+    if (input.batteryType === 'plomb' && typeof BATTERY_VV !== 'undefined')
+      battRef = BATTERY_VV.find(b => b.capacity === input.batteryCapacity);
+    else if (['agm','gel'].includes(input.batteryType) && typeof BATTERY_GEL !== 'undefined')
+      battRef = BATTERY_GEL.find(b => b.capacity === input.batteryCapacity);
+    else if (typeof BATTERY_LITHIUM !== 'undefined')
+      battRef = BATTERY_LITHIUM.find(b => b.capacity === input.batteryCapacity && b.voltage === input.vSystem)
+        || BATTERY_LITHIUM.find(b => b.capacity === input.batteryCapacity);
+
+    const invLabel = input.inverterType === 'onduleur' ? 'Onduleur hybride' : input.inverterType === 'onduleur_sinus' ? 'Onduleur pur sinus' : 'Convertisseur DC/AC';
+
     const items = [
-      { key: 'panel',          qty: results.totalPanels,                        price: panelPrice },
-      { key: battKey,          qty: results.totalBatteries,                     price: batteryPrice },
-      { key: 'inverter',       qty: 1,                                          price: inverterPrice, label: input.inverterType === 'onduleur' ? 'Onduleur hybride' : input.inverterType === 'onduleur_sinus' ? 'Onduleur pur sinus' : 'Convertisseur DC/AC' },
-      ...(isOffgrid ? [{ key: regKey, qty: 1, price: regulatorPrice }] : []),
+      { key: 'panel', qty: results.totalPanels, price: panelPrice,
+        ref: panelRef ? `Panneau ${panelRef.label}` : `Panneau ${input.panelPower} Wc`,
+        specs: panelRef ? `Vmp ${panelRef.vmp}V · Imp ${panelRef.imp}A · Voc ${panelRef.voc}V` : '' },
+      { key: battKey, qty: results.totalBatteries, price: batteryPrice,
+        ref: battRef ? battRef.label : `${input.batteryCapacity}Ah ${input.batteryVoltage || 12}V`,
+        specs: `${input.batteryPreset.label} · DoD ${Math.round(input.batteryPreset.dod*100)}%` },
+      { key: 'inverter', qty: 1, price: inverterPrice, label: invLabel,
+        ref: invMatch ? `${invLabel} ${invMatch.label}` : invLabel,
+        specs: invMatch ? `${invMatch.power}W${invMatch.voltage ? ' · ' + invMatch.voltage + 'V' : ''}` : '' },
+      ...(isOffgrid ? [{ key: regKey, qty: 1, price: regulatorPrice,
+        ref: regMatch ? `Regulateur ${regMatch.label}` : `Regulateur ${input.regulatorType.toUpperCase()}`,
+        specs: regMatch ? `${regMatch.current}A` : '' }] : []),
       { key: 'mounting',       qty: cq.mounting       ?? results.totalPanels,   price: prices.mounting.price },
       { key: 'cable_dc',       qty: cq.cable_dc       ?? (input.cableDcLength || 30), price: prices.cable_dc.price },
       { key: 'cable_ac',       qty: cq.cable_ac       ?? (input.cableAcLength || 20), price: prices.cable_ac.price },
