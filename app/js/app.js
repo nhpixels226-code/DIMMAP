@@ -912,7 +912,7 @@ function getInput() {
     catalogPanelPrice,
     catalogBatteryPrice,
     catalogInverterPrice: parseFloat(document.getElementById('inverterModelPrice').value) || undefined,
-    systemLifeYears: isExpert ? (parseFloat(document.getElementById('systemLifeYears').value) || 25) : 25,
+    systemLifeYears: isExpert ? (parseFloat(document.getElementById('systemLifeYears').value) || 20) : 20,
     inverterLifeYears: isExpert ? (parseFloat(document.getElementById('inverterLifeYears').value) || 10) : 10,
     regulatorLifeYears: isExpert ? (parseFloat(document.getElementById('regulatorLifeYears').value) || 15) : 15,
   };
@@ -1240,13 +1240,30 @@ function onQtyChange(idx, value) {
 }
 
 // ═══ EXPORT PDF ═══
+function printPage(htmlContent) {
+  const w = window.open('', '_blank');
+  if (w) {
+    w.document.write(htmlContent);
+    w.document.close();
+    setTimeout(() => w.print(), 500);
+    return;
+  }
+  const titleMatch = htmlContent.match(/<title>([^<]*)<\/title>/);
+  const pdfTitle = titleMatch ? titleMatch[1] : 'DIMMAP';
+  const originalTitle = document.title;
+  const originalBody = document.body.innerHTML;
+  const bodyMatch = htmlContent.match(/<body[^>]*>([\s\S]*)<\/body>/i);
+  const styleMatch = htmlContent.match(/<style>([\s\S]*?)<\/style>/);
+  document.title = pdfTitle;
+  document.body.innerHTML = (styleMatch ? '<style>' + styleMatch[1] + '</style>' : '') + (bodyMatch ? bodyMatch[1] : htmlContent);
+  window.print();
+  document.title = originalTitle;
+  document.body.innerHTML = originalBody;
+}
+
 function exportPDF() {
   if (!state.results || !state.costs) return;
-  const printContent = generatePrintHTML();
-  const w = window.open('', '_blank');
-  w.document.write(printContent);
-  w.document.close();
-  setTimeout(() => w.print(), 500);
+  printPage(generatePrintHTML());
 }
 
 function exportBOM() {
@@ -1302,10 +1319,7 @@ function exportBOM() {
   </div>
   </body></html>`;
 
-  const w = window.open('', '_blank');
-  w.document.write(printContent);
-  w.document.close();
-  setTimeout(() => w.print(), 500);
+  printPage(printContent);
 }
 
 function generatePrintHTML() {
@@ -1710,11 +1724,11 @@ function viewHistoryProject(id) {
     </div>
     <div class="result-card">
       <div class="r-value">${p.lifetimeCost ? formatPrice(p.lifetimeCost) : formatPrice(p.cost)}</div>
-      <div class="r-unit">FCFA</div><div class="r-label">Cout sur ${p.systemLifeYears || 25} ans</div>
+      <div class="r-unit">FCFA</div><div class="r-label">Cout sur ${p.systemLifeYears || 20} ans</div>
     </div>
     <div class="result-card highlight">
       <div class="r-value">${p.lcoe ? formatNum(p.lcoe, 0) : '—'}</div>
-      <div class="r-unit">FCFA/kWh</div><div class="r-label">LCOE (${p.systemLifeYears || 25} ans)</div>
+      <div class="r-unit">FCFA/kWh</div><div class="r-label">LCOE (${p.systemLifeYears || 20} ans)</div>
     </div>
     <div class="result-card">
       <div class="r-value">${(() => { const ds = (p.energy/1000)*95; return ds > 0 ? formatNum(p.cost/(ds*365),1) : '—'; })()}</div>
@@ -1817,8 +1831,8 @@ function exportHistoryPDF(id) {
   </tbody></table>
   <div class="grid" style="margin-top:8px;">
     <div>Cout par Wc</div><div>${p.costPerWc ? formatNum(p.costPerWc,0) : '—'} FCFA/Wc</div>
-    <div>Cout sur ${p.systemLifeYears || 25} ans</div><div>${p.lifetimeCost ? formatPrice(p.lifetimeCost) : formatPrice(p.cost)}</div>
-    <div>LCOE (${p.systemLifeYears || 25} ans)</div><div>${p.lcoe ? formatNum(p.lcoe,0) : '—'} FCFA/kWh</div>
+    <div>Cout sur ${p.systemLifeYears || 20} ans</div><div>${p.lifetimeCost ? formatPrice(p.lifetimeCost) : formatPrice(p.cost)}</div>
+    <div>LCOE (${p.systemLifeYears || 20} ans)</div><div>${p.lcoe ? formatNum(p.lcoe,0) : '—'} FCFA/kWh</div>
     <div>Retour sur investissement</div><div>${(() => { const ds = (p.energy/1000)*95; return ds > 0 ? formatNum(p.cost/(ds*365),1)+' ans' : '—'; })()}</div>
   </div>` : ''}
 
@@ -1827,10 +1841,7 @@ function exportHistoryPDF(id) {
   </div>
   </body></html>`;
 
-  const w = window.open('', '_blank');
-  w.document.write(printContent);
-  w.document.close();
-  setTimeout(() => w.print(), 500);
+  printPage(printContent);
 }
 
 function deleteFromHistory(id) {

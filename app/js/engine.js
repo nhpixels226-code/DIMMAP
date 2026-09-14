@@ -383,7 +383,7 @@ const Engine = {
     const battLifeYears = input.batteryPreset?.lifeYears
       || (BATTERY_PRESETS[input.batteryType] || BATTERY_PRESETS.plomb).lifeYears;
 
-    const systemLifeYears = input.systemLifeYears || 25;
+    const systemLifeYears = input.systemLifeYears || 20;
     const inverterLifeYears = input.inverterLifeYears || 10;
     const regulatorLifeYears = input.regulatorLifeYears || 15;
 
