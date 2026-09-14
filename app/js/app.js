@@ -61,6 +61,15 @@ function goToStep(n) {
   if (n === 4) runCalculation();
   if (n === 5) runCostCalculation();
 
+  if (n > 0 && !state.modeLocked) {
+    state.modeLocked = true;
+    document.getElementById('modeToggle').style.display = 'none';
+  }
+  if (n === 0) {
+    state.modeLocked = false;
+    document.getElementById('modeToggle').style.display = '';
+  }
+
   state.step = n;
   if (n > state.maxStepReached) state.maxStepReached = n;
   document.querySelectorAll('.screen').forEach((el, i) => {
@@ -102,8 +111,9 @@ document.querySelectorAll('.step-dot').forEach(el => {
   el.addEventListener('click', () => goToStep(parseInt(el.dataset.step)));
 });
 
-// ═══ MODE SIMPLE / EXPERT ═══
+// ═══ MODE STANDARD / EXPERT ═══
 function setMode(mode) {
+  if (state.modeLocked) return;
   state.mode = mode;
   document.body.classList.toggle('expert-mode', mode === 'expert');
   document.getElementById('btnSimple').classList.toggle('active', mode === 'simple');

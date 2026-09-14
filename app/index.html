@@ -4,7 +4,12 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <title>DIMMAP — Dimensionnement Solaire</title>
-  <link rel="stylesheet" href="css/style.css?v=35">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#1565C0">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <link rel="stylesheet" href="css/style.css?v=36">
 </head>
 <body>
 <div class="app" id="app">
@@ -16,8 +21,8 @@
         <div class="logo">DIM<span>MAP</span></div>
         <div class="subtitle">Dimensionnement Solaire PV</div>
       </div>
-      <div class="mode-toggle">
-        <button id="btnSimple" class="active" onclick="setMode('simple')">Simple</button>
+      <div class="mode-toggle" id="modeToggle">
+        <button id="btnSimple" class="active" onclick="setMode('simple')">Standard</button>
         <button id="btnExpert" onclick="setMode('expert')">Expert</button>
       </div>
     </div>
@@ -436,8 +441,9 @@
   </div>
 </div>
 
-<script src="js/data.js?v=35"></script>
-<script src="js/engine.js?v=35"></script>
-<script src="js/app.js?v=35"></script>
+<script src="js/data.js?v=36"></script>
+<script src="js/engine.js?v=36"></script>
+<script src="js/app.js?v=36"></script>
+<script>if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');</script>
 </body>
 </html>
