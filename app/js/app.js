@@ -942,7 +942,6 @@ function runCalculation() {
   }
   const input = getInput();
   state.results = Engine.compute(input);
-  state.costs = null;
   renderResults(state.results, input);
 }
 
@@ -1103,6 +1102,12 @@ function renderFormulas(r, input) {
         <div class="formula-val">C = (${formatNum(r.dailyEnergy,0)} × ${input.cutoffHours || 4} / 24) / (${vSys} × ${dod} × ${effBatt.toFixed(2)}) = <b>${formatNum(r.requiredBatteryCap,0)} Ah</b></div>
       </div>`;
 
+  const panelVmp = input.panelVmp || 40;
+  const panelVoc = input.panelVoc || panelVmp * 1.22;
+  const panelPower = input.panelPower || 350;
+  const dailyEnergyKwh = r.dailyEnergy / 1000;
+  const costs = state.costs;
+
   container.innerHTML = `
     <div class="formulas-grid">
       <div class="formula-block">
@@ -1114,6 +1119,21 @@ function renderFormulas(r, input) {
         <div class="formula-label">F6 — Puissance crete necessaire</div>
         <div class="formula-eq">Pc = E_corr / (HSP × kLoss)</div>
         <div class="formula-val">Pc = ${formatNum(r.correctedEnergy,0)} / (${hsp} × ${kLoss}) = <b>${formatNum(r.requiredPc,0)} Wc</b></div>
+      </div>
+      <div class="formula-block">
+        <div class="formula-label">F8 — Panneaux en serie</div>
+        <div class="formula-eq">N_serie = ⌈V_sys / Vmp⌉</div>
+        <div class="formula-val">N_serie = ⌈${vSys} / ${formatNum(panelVmp,1)}⌉ = <b>${r.panelsInSeries}</b></div>
+      </div>
+      <div class="formula-block">
+        <div class="formula-label">F9 — Chaines en parallele</div>
+        <div class="formula-eq">N_para = ⌈N_total / N_serie⌉</div>
+        <div class="formula-val">N_para = ⌈${r.totalPanels} / ${r.panelsInSeries}⌉ = <b>${r.stringsInParallel}</b></div>
+      </div>
+      <div class="formula-block">
+        <div class="formula-label">F10 — Puissance installee</div>
+        <div class="formula-eq">Pc_inst = N_total × P_panneau</div>
+        <div class="formula-val">Pc_inst = ${r.totalPanels} × ${panelPower} = <b>${formatNum(r.installedPc,0)} Wc</b></div>
       </div>
       ${battFormula}
       ${regFormula}
@@ -1128,9 +1148,19 @@ function renderFormulas(r, input) {
         <div class="formula-val">Prod = (${formatNum(r.installedPc,0)} × ${hsp} × ${kLoss}) / 1000 = <b>${formatNum(r.dailyProduction,2)} kWh/j</b></div>
       </div>
       <div class="formula-block">
+        <div class="formula-label">F20 — Ratio de couverture</div>
+        <div class="formula-eq">Ratio = Prod_j / Conso_j</div>
+        <div class="formula-val">Ratio = ${formatNum(r.dailyProduction,2)} / ${formatNum(dailyEnergyKwh,2)} = <b>${formatNum(r.coverageRatio,2)}x</b></div>
+      </div>
+      <div class="formula-block">
+        <div class="formula-label">F21 — Autonomie reelle</div>
+        <div class="formula-eq">Auto = E_stockee_utile / Conso_j</div>
+        <div class="formula-val">Auto = ${formatNum(r.usableEnergy,2)} / ${formatNum(dailyEnergyKwh,2)} = <b>${formatNum(r.realAutonomy,1)} jours</b></div>
+      </div>
+      <div class="formula-block">
         <div class="formula-label">F24 — LCOE (cout vie entiere)</div>
-        <div class="formula-eq">LCOE = Cout_vie_entiere / (Prod_j × 365 × Duree_vie_systeme)</div>
-        <div class="formula-val">Calcule a l'etape Couts — inclut les remplacements batteries et onduleur sur la duree de vie du systeme (defaut 25 ans)</div>
+        <div class="formula-eq">LCOE = Cout_vie_entiere / (Prod_j × 365 × Duree_systeme)</div>
+        <div class="formula-val">${costs ? `LCOE = ${formatPrice(costs.lifetimeCost)} / (${formatNum(r.dailyProduction,2)} × 365 × ${costs.systemLifeYears}) = <b>${formatNum(costs.lcoe,0)} FCFA/kWh</b>` : 'Calcule a l\'etape Couts'}</div>
       </div>
     </div>`;
 }
