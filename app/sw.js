@@ -1,8 +1,8 @@
-const CACHE_NAME = 'dimmap-v46';
+const CACHE_NAME = 'dimmap-v47';
 const ASSETS = [
   './',
   './index.html',
-  './css/style.css?v=46',
+  './css/style.css?v=47',
   './js/data.js?v=41',
   './js/engine.js?v=41',
   './js/app.js?v=46',

@@ -5,11 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <title>DIMMAP — Dimensionnement Solaire</title>
   <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#1565C0">
+  <meta name="theme-color" content="#0D1B2A">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <link rel="apple-touch-icon" href="icons/icon-192.png">
-  <link rel="stylesheet" href="css/style.css?v=46">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css?v=47">
 </head>
 <body>
 <div class="app" id="app">
@@ -42,14 +45,14 @@
   <div class="drawer-overlay" id="drawerOverlay" onclick="closeDrawer()"></div>
   <nav class="nav-drawer" id="navDrawer">
     <div class="drawer-header">Etapes</div>
-    <div class="drawer-step active" data-step="0"><div class="drawer-dot"><span class="step-icon">☀</span></div><span>Accueil</span></div>
-    <div class="drawer-step" data-step="1"><div class="drawer-dot"><span class="step-icon">⚡</span></div><span>Appareils</span></div>
-    <div class="drawer-step" data-step="2"><div class="drawer-dot"><span class="step-icon">◎</span></div><span>Site</span></div>
-    <div class="drawer-step" data-step="3"><div class="drawer-dot"><span class="step-icon">⚙</span></div><span>Equipement</span></div>
-    <div class="drawer-step" data-step="4"><div class="drawer-dot"><span class="step-icon">▣</span></div><span>Resultats</span></div>
-    <div class="drawer-step" data-step="5"><div class="drawer-dot"><span class="step-icon">¤</span></div><span>Couts</span></div>
+    <div class="drawer-step active" data-step="0"><div class="drawer-dot"><svg class="step-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg></div><span>Accueil</span></div>
+    <div class="drawer-step" data-step="1"><div class="drawer-dot"><svg class="step-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg></div><span>Appareils</span></div>
+    <div class="drawer-step" data-step="2"><div class="drawer-dot"><svg class="step-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg></div><span>Site</span></div>
+    <div class="drawer-step" data-step="3"><div class="drawer-dot"><svg class="step-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg></div><span>Equipement</span></div>
+    <div class="drawer-step" data-step="4"><div class="drawer-dot"><svg class="step-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 20V10M12 20V4M6 20v-6"/></svg></div><span>Resultats</span></div>
+    <div class="drawer-step" data-step="5"><div class="drawer-dot"><svg class="step-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg></div><span>Couts</span></div>
     <div class="drawer-theme-toggle" onclick="toggleTheme()">
-      <div class="theme-icon" id="themeIcon">&#9790;</div>
+      <div class="theme-icon" id="themeIcon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg></div>
       <span id="themeLabel">Mode sombre</span>
     </div>
   </nav>
@@ -65,12 +68,12 @@
       </div>
       <div class="install-type-cards">
         <div class="install-card selected" data-type="offgrid" onclick="selectInstallType('offgrid')">
-          <div class="ic-icon">&#9728;</div>
+          <div class="ic-icon"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg></div>
           <div class="ic-title">Off-grid</div>
           <div class="ic-desc">Autonome, sans connexion au reseau</div>
         </div>
         <div class="install-card" data-type="hybrid" onclick="selectInstallType('hybrid')">
-          <div class="ic-icon">&#9889;</div>
+          <div class="ic-icon"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg></div>
           <div class="ic-title">Hybride</div>
           <div class="ic-desc">Solaire + reseau electrique</div>
         </div>
@@ -92,7 +95,7 @@
     <!-- ── ECRAN 1: BILAN ENERGETIQUE ── -->
     <div class="screen" id="screen-1">
       <div class="card">
-        <div class="card-title">Vos appareils electriques</div>
+        <div class="card-title"><span class="icon card-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg></span>Vos appareils electriques</div>
         <div id="applianceList"></div>
         <button class="btn btn-primary mt-8" onclick="openAddModal()" style="width:100%">
           + Ajouter un appareil
@@ -119,7 +122,7 @@
     <!-- ── ECRAN 2: PARAMETRES DU SITE ── -->
     <div class="screen" id="screen-2">
       <div class="card">
-        <div class="card-title">Localisation</div>
+        <div class="card-title"><span class="icon card-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg></span>Localisation</div>
         <div class="form-group">
           <label class="form-label">Pays</label>
           <select id="selCountry" onchange="onCountryChange()">
@@ -151,7 +154,7 @@
       </div>
 
       <div class="card">
-        <div class="card-title">Systeme</div>
+        <div class="card-title"><span class="icon card-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg></span>Systeme</div>
         <div class="form-group">
           <label class="form-label">Tension du systeme</label>
           <div class="chip-group" id="voltageChips">
@@ -214,7 +217,7 @@
     <!-- ── ECRAN 3: EQUIPEMENTS ── -->
     <div class="screen" id="screen-3">
       <div class="card" id="regulatorCard">
-        <div class="card-title">Regulateur de charge</div>
+        <div class="card-title"><span class="icon card-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="6" width="22" height="12" rx="2"/><path d="M7 12h4M9 10v4"/><circle cx="16" cy="12" r="1.5"/></svg></span>Regulateur de charge</div>
         <div class="chip-group">
           <div class="chip" data-reg="pwm" onclick="selectRegulator('pwm')">PWM</div>
           <div class="chip selected" data-reg="mppt" onclick="selectRegulator('mppt')">MPPT</div>
@@ -225,7 +228,7 @@
       </div>
 
       <div class="card">
-        <div class="card-title">Panneau solaire</div>
+        <div class="card-title"><span class="icon card-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="14" rx="2"/><line x1="2" y1="11" x2="22" y2="11"/><line x1="9" y1="4" x2="9" y2="18"/><line x1="15" y1="4" x2="15" y2="18"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="8" y1="22" x2="16" y2="22"/></svg></span>Panneau solaire</div>
         <div class="form-hint mb-8">Choisissez une configuration de panneau adaptee a votre installation</div>
         <div id="panelRecos"></div>
         <input type="hidden" id="panelPower" value="300">
@@ -235,7 +238,7 @@
       </div>
 
       <div class="card">
-        <div class="card-title">Batterie</div>
+        <div class="card-title"><span class="icon card-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="18" height="10" rx="2"/><path d="M22 11v2"/><path d="M7 11v2M11 11v2"/></svg></span>Batterie</div>
         <div class="form-group">
           <label class="form-label">Technologie</label>
           <select id="batteryType" onchange="onBatteryTypeChange()">
@@ -270,7 +273,7 @@
       </div>
 
       <div class="card" id="inverterCard">
-        <div class="card-title" id="inverterCardTitle">Onduleur / Convertisseur</div>
+        <div class="card-title" id="inverterCardTitle"><span class="icon card-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="18" rx="3"/><path d="M7 12h2l2-4 2 8 2-4h2"/></svg></span>Onduleur / Convertisseur</div>
         <div class="form-group" id="invTypeGroup">
           <label class="form-label">Type d'equipement</label>
           <div class="chip-group" id="invChipGroup">
@@ -316,7 +319,7 @@
       <div class="result-grid" id="costIndicators"></div>
 
       <div class="card expert-only mb-8">
-        <div class="card-title">Frais annexes (%)</div>
+        <div class="card-title"><span class="icon card-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg></span>Frais annexes (%)</div>
         <div class="input-row">
           <div class="form-group">
             <label class="form-label">Main d'oeuvre</label>
@@ -333,7 +336,7 @@
         </div>
       </div>
       <div class="card expert-only mb-8">
-        <div class="card-title">Projection duree de vie</div>
+        <div class="card-title"><span class="icon card-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></span>Projection duree de vie</div>
         <div class="input-row">
           <div class="form-group">
             <label class="form-label">Vie systeme (ans)</label>
@@ -351,7 +354,7 @@
       </div>
 
       <div class="card">
-        <div class="card-title">Budget estimatif</div>
+        <div class="card-title"><span class="icon card-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="18" rx="2"/><path d="M2 9h20M2 15h20"/><path d="M9 3v18"/></svg></span>Budget estimatif</div>
         <div style="overflow-x:auto;">
           <table class="cost-table" id="costTable"></table>
         </div>

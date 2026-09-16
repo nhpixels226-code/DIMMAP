@@ -195,7 +195,7 @@ function selectInstallType(type) {
 
   if (type === 'offgrid') {
     if (regCard) regCard.style.display = '';
-    if (invTitle) invTitle.textContent = 'Onduleur / Convertisseur';
+    if (invTitle) invTitle.innerHTML = '<span class="icon card-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="18" rx="3"/><path d="M7 12h2l2-4 2 8 2-4h2"/></svg></span>Onduleur / Convertisseur';
     if (invChips) invChips.style.display = '';
     if (chipConv) chipConv.style.display = '';
     if (chipSinus) chipSinus.style.display = '';
@@ -203,7 +203,7 @@ function selectInstallType(type) {
     selectInverterType('convertisseur');
   } else {
     if (regCard) regCard.style.display = 'none';
-    if (invTitle) invTitle.textContent = 'Onduleur hybride';
+    if (invTitle) invTitle.innerHTML = '<span class="icon card-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="18" rx="3"/><path d="M7 12h2l2-4 2 8 2-4h2"/></svg></span>Onduleur hybride';
     if (invChips) invChips.style.display = 'none';
     if (chipConv) chipConv.style.display = 'none';
     if (chipSinus) chipSinus.style.display = 'none';
@@ -2121,7 +2121,9 @@ function updateThemeUI(theme) {
   const label = document.getElementById('themeLabel');
   if (!icon || !label) return;
   const isDark = theme === 'dark' || (theme === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches);
-  icon.textContent = isDark ? '☀' : '☾';
+  icon.innerHTML = isDark
+    ? '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>'
+    : '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>';
   label.textContent = isDark ? 'Mode clair' : 'Mode sombre';
 }
 
