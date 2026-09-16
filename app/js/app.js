@@ -36,22 +36,35 @@ function validateStep(step) {
 }
 
 function showStepError(msg) {
-  let el = document.getElementById('stepError');
-  if (!el) {
-    el = document.createElement('div');
-    el.id = 'stepError';
-    el.className = 'alert alert-error';
-    el.style.margin = '0 16px 8px';
-    document.querySelector('.bottom-nav').before(el);
-  }
-  el.innerHTML = '<span class="alert-icon">&#9888;</span><div>' + msg + '</div>';
-  el.style.display = 'flex';
-  setTimeout(() => { if (el) el.style.display = 'none'; }, 4000);
+  showToast(msg, 'warn', 4000);
 }
 
-function clearStepError() {
-  const el = document.getElementById('stepError');
-  if (el) el.style.display = 'none';
+function clearStepError() {}
+
+function setFieldError(inputId, msg) {
+  const input = document.getElementById(inputId);
+  if (!input) return;
+  const group = input.closest('.form-group');
+  if (!group) return;
+  group.classList.add('has-error');
+  let err = group.querySelector('.form-error');
+  if (!err) {
+    err = document.createElement('div');
+    err.className = 'form-error';
+    group.appendChild(err);
+  }
+  err.textContent = msg;
+}
+
+function clearFieldError(inputId) {
+  const input = document.getElementById(inputId);
+  if (!input) return;
+  const group = input.closest('.form-group');
+  if (group) {
+    group.classList.remove('has-error');
+    const err = group.querySelector('.form-error');
+    if (err) err.textContent = '';
+  }
 }
 
 function goToStep(n) {
@@ -63,28 +76,43 @@ function goToStep(n) {
 
   if (n > 0 && !state.modeLocked) {
     state.modeLocked = true;
-    document.getElementById('modeToggle').style.display = 'none';
+    document.getElementById('modeToggle').hidden = true;
+    if (state.mode === 'expert') document.getElementById('modeBadge').hidden = false;
   }
   if (n === 0) {
     state.modeLocked = false;
-    document.getElementById('modeToggle').style.display = '';
+    document.getElementById('modeToggle').hidden = false;
+    document.getElementById('modeBadge').hidden = true;
   }
 
+  const prevStep = state.step;
   state.step = n;
   if (n > state.maxStepReached) state.maxStepReached = n;
+  const goingBack = n < prevStep;
   document.querySelectorAll('.screen').forEach((el, i) => {
-    el.classList.toggle('active', i === n);
+    el.classList.remove('active', 'slide-back');
+    if (i === n) {
+      el.classList.add('active');
+      if (goingBack) el.classList.add('slide-back');
+    }
   });
-  document.querySelectorAll('.step-dot').forEach((el, i) => {
-    el.classList.remove('active', 'done');
+  const STEP_NAMES = ['Accueil','Appareils','Site','Equipement','Resultats','Couts'];
+  document.getElementById('stepIndDot').textContent = n + 1;
+  document.getElementById('stepIndLabel').textContent = STEP_NAMES[n];
+  const progress = document.getElementById('stepProgress');
+  if (progress) progress.style.width = ((n + 1) / 6 * 100).toFixed(1) + '%';
+  document.querySelectorAll('.drawer-step').forEach((el, i) => {
+    el.classList.remove('active', 'done', 'locked');
     if (i === n) el.classList.add('active');
     else if (i < n) el.classList.add('done');
+    else if (i > state.maxStepReached + 1) el.classList.add('locked');
   });
-  const activeDot = document.querySelector('.step-dot.active');
-  if (activeDot) activeDot.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
 
   updateNavButtons();
   window.scrollTo(0, 0);
+  const content = document.querySelector('.content');
+  if (content) content.scrollTop = 0;
+  setTimeout(updateScrollIndicator, 100);
 }
 
 function nextStep() {
@@ -97,19 +125,46 @@ function updateNavButtons() {
   const prev = document.getElementById('btnPrev');
   const next = document.getElementById('btnNext');
   prev.style.display = state.step === 0 ? 'none' : '';
+  const NEXT_LABELS = ['Ajouter les appareils', 'Choisir le site', 'Choisir l\'equipement', 'Voir les resultats', 'Estimer les couts', 'Exporter PDF'];
   if (state.step === 5) {
-    next.textContent = 'Exporter PDF';
+    next.textContent = NEXT_LABELS[5];
     next.onclick = exportPDF;
   } else {
-    next.textContent = 'Suivant';
+    next.textContent = NEXT_LABELS[state.step];
     next.onclick = nextStep;
   }
 }
 
-// Stepper click
-document.querySelectorAll('.step-dot').forEach(el => {
-  el.addEventListener('click', () => goToStep(parseInt(el.dataset.step)));
+// Drawer navigation
+function toggleDrawer() {
+  const drawer = document.getElementById('navDrawer');
+  const overlay = document.getElementById('drawerOverlay');
+  const ind = document.getElementById('stepIndicator');
+  const isOpen = drawer.classList.contains('open');
+  drawer.classList.toggle('open', !isOpen);
+  overlay.classList.toggle('open', !isOpen);
+  ind.classList.toggle('open', !isOpen);
+}
+function closeDrawer() {
+  document.getElementById('navDrawer').classList.remove('open');
+  document.getElementById('drawerOverlay').classList.remove('open');
+  document.getElementById('stepIndicator').classList.remove('open');
+}
+document.querySelectorAll('.drawer-step').forEach(el => {
+  el.addEventListener('click', () => {
+    goToStep(parseInt(el.dataset.step));
+    closeDrawer();
+  });
 });
+
+// Swipe drawer open from left edge
+let touchStartX = 0;
+document.addEventListener('touchstart', e => { touchStartX = e.touches[0].clientX; }, {passive: true});
+document.addEventListener('touchend', e => {
+  const dx = e.changedTouches[0].clientX - touchStartX;
+  if (touchStartX < 30 && dx > 60) toggleDrawer();
+  if (document.getElementById('navDrawer').classList.contains('open') && dx < -60) closeDrawer();
+}, {passive: true});
 
 // ═══ MODE STANDARD / EXPERT ═══
 function setMode(mode) {
@@ -163,17 +218,19 @@ function openAddModal() {
   document.getElementById('addModal').classList.add('show');
   renderCatTabs();
   renderPresets('Tous');
+  trapFocus('addModal');
 }
 function closeAddModal() {
-  document.getElementById('addModal').classList.remove('show');
+  closeModalAnimated('addModal');
 }
 
 function renderCatTabs() {
   const cats = ['Tous', ...new Set(APPLIANCES.map(a => a.cat))];
   const container = document.getElementById('catTabs');
-  container.innerHTML = cats.map((c, i) =>
-    `<button class="cat-tab ${i === 0 ? 'active' : ''}" onclick="filterCat('${c}', this)">${c}</button>`
-  ).join('');
+  container.innerHTML = cats.map((c, i) => {
+    const count = c === 'Tous' ? APPLIANCES.length : APPLIANCES.filter(a => a.cat === c).length;
+    return `<button class="cat-tab ${i === 0 ? 'active' : ''}" onclick="filterCat('${c}', this)">${c} <span class="cat-count">${count}</span></button>`;
+  }).join('');
 }
 
 function filterCat(cat, btn) {
@@ -233,7 +290,12 @@ function addCustomAppliance() {
   const power = parseFloat(document.getElementById('customAppPower').value);
   const qty = parseInt(document.getElementById('customAppQty').value) || 1;
   const hours = parseFloat(document.getElementById('customAppHours').value);
-  if (!name || !power || !hours) return;
+  let hasErr = false;
+  clearFieldError('customAppName'); clearFieldError('customAppPower'); clearFieldError('customAppHours');
+  if (!name) { setFieldError('customAppName', 'Nom requis'); hasErr = true; }
+  if (!power || power <= 0) { setFieldError('customAppPower', 'Puissance requise'); hasErr = true; }
+  if (!hours || hours <= 0) { setFieldError('customAppHours', 'Heures requises'); hasErr = true; }
+  if (hasErr) return;
 
   const kStart = parseFloat(document.getElementById('customAppMotor').value) || 1.0;
   state.appliances.push({
@@ -251,26 +313,19 @@ function addCustomAppliance() {
   saveState();
 }
 
-function removeAppliance(idx, btn) {
-  if (btn && !btn.dataset.confirmed) {
-    btn.dataset.confirmed = 'true';
-    btn.innerHTML = '&#10003;';
-    btn.style.background = 'var(--warn)';
-    btn.style.color = 'white';
-    btn.title = 'Confirmer la suppression';
-    setTimeout(() => {
-      if (btn.dataset.confirmed) {
-        delete btn.dataset.confirmed;
-        btn.innerHTML = '&times;';
-        btn.style.background = '';
-        btn.style.color = '';
-      }
-    }, 2500);
-    return;
-  }
-  state.appliances.splice(idx, 1);
+function removeAppliance(idx) {
+  const removed = state.appliances.splice(idx, 1)[0];
   renderAppliances();
   saveState();
+  showToast('Appareil supprime', 'warn', 5000, {
+    label: 'Annuler',
+    action: () => {
+      state.appliances.splice(idx, 0, removed);
+      renderAppliances();
+      saveState();
+      showToast('Appareil restaure', 'success');
+    }
+  });
 }
 
 function updateAppliance(idx, field, value) {
@@ -282,7 +337,16 @@ function updateAppliance(idx, field, value) {
 function renderAppliances() {
   const container = document.getElementById('applianceList');
   if (state.appliances.length === 0) {
-    container.innerHTML = '<p style="text-align:center; color:var(--text-sec); padding:20px; font-size:13px;">Aucun appareil ajoute.<br>Appuyez sur le bouton ci-dessous pour commencer.</p>';
+    container.innerHTML = `<div class="empty-state">
+      <svg width="80" height="80" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="12" y="20" width="56" height="40" rx="6" stroke="var(--border)" stroke-width="2" fill="var(--surface-alt)"/>
+        <circle cx="40" cy="40" r="10" stroke="var(--primary)" stroke-width="2" fill="none"/>
+        <path d="M40 34v8m-4-4h8" stroke="var(--primary)" stroke-width="2" stroke-linecap="round"/>
+        <path d="M24 14l4 6M56 14l-4 6M40 10v4" stroke="var(--accent)" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+      <p class="empty-state-title">Aucun appareil ajoute</p>
+      <p class="empty-state-desc">Appuyez sur le bouton ci-dessous pour commencer.</p>
+    </div>`;
   } else {
     container.innerHTML = state.appliances.map((a, i) => {
       const energy = Engine.energyPerAppliance(a.power, a.qty, a.hours);
@@ -292,16 +356,16 @@ function renderAppliances() {
           <div class="appliance-detail">
             <input type="number" value="${a.power}" min="1" style="width:55px;padding:2px 4px;font-size:11px;border:1px solid var(--border);border-radius:3px;text-align:center;" onchange="updateAppliance(${i},'power',this.value)"> W
             &times;
-            <input type="number" value="${a.qty}" min="1" style="width:35px;padding:2px 4px;font-size:11px;border:1px solid var(--border);border-radius:3px;text-align:center;" onchange="updateAppliance(${i},'qty',this.value)">
+            <input type="number" value="${a.qty}" min="1" inputmode="numeric" style="width:35px;padding:2px 4px;font-size:11px;border:1px solid var(--border);border-radius:3px;text-align:center;" onchange="updateAppliance(${i},'qty',this.value)">
             &times;
-            <input type="number" value="${a.hours}" min="0.1" max="24" step="0.5" style="width:45px;padding:2px 4px;font-size:11px;border:1px solid var(--border);border-radius:3px;text-align:center;" onchange="updateAppliance(${i},'hours',this.value)"> h
+            <input type="number" value="${a.hours}" min="0.1" max="24" step="0.5" inputmode="decimal" style="width:45px;padding:2px 4px;font-size:11px;border:1px solid var(--border);border-radius:3px;text-align:center;" onchange="updateAppliance(${i},'hours',this.value)"> h
           </div>
         </div>
         <div class="appliance-energy">
           <div class="value">${formatNum(energy)}</div>
           <div class="unit">Wh/j</div>
         </div>
-        <button class="btn-remove" onclick="removeAppliance(${i}, this)">&times;</button>
+        <button class="btn-remove" onclick="removeAppliance(${i})">&times;</button>
       </div>`;
     }).join('');
   }
@@ -313,9 +377,9 @@ function renderAppliances() {
   document.getElementById('totalPower').textContent = formatNum(totalP) + ' W';
 
   const rec = VOLTAGE_RECOMMENDATIONS.find(v => totalP <= v.maxPower);
-  if (rec && rec.voltage !== state.vSystem) {
-    selectVoltage(rec.voltage);
-    document.getElementById('voltageHint').textContent = `Auto: ${rec.voltage}V recommande pour ${formatNum(totalP)} W`;
+  if (rec) {
+    if (rec.voltage !== state.vSystem) selectVoltage(rec.voltage);
+    document.getElementById('voltageHint').textContent = `Auto: ${rec.voltage}V recommande pour ${formatNum(totalP, 0)} W`;
   }
 }
 
@@ -735,10 +799,11 @@ function openCatalog() {
   renderCatalogTabs();
   renderCatalogContent();
   document.getElementById('catalogModal').classList.add('show');
+  trapFocus('catalogModal');
 }
 
 function closeCatalog() {
-  document.getElementById('catalogModal').classList.remove('show');
+  closeModalAnimated('catalogModal');
 }
 
 function renderCatalogTabs() {
@@ -928,21 +993,47 @@ function getInput() {
   };
 }
 
+function showResultsSkeleton() {
+  const sk = `<div class="result-card"><div class="skeleton skeleton-value"></div><div class="skeleton skeleton-label"></div></div>`;
+  document.getElementById('resultsSummary').innerHTML = sk + sk;
+  document.getElementById('resultsPanels').innerHTML = `<div class="skeleton skeleton-card" style="height:100px"></div>`;
+  document.getElementById('resultsBatteries').innerHTML = `<div class="skeleton skeleton-card" style="height:100px"></div>`;
+  document.getElementById('resultsRegInv').innerHTML = `<div class="skeleton skeleton-card" style="height:60px"></div>`;
+  document.getElementById('resultsProdBar').innerHTML = `<div class="skeleton skeleton-card" style="height:40px"></div>`;
+  document.getElementById('warningsContainer').innerHTML = '';
+}
+
 function runCalculation() {
   if (state.appliances.length === 0) {
     state.results = null;
-    document.getElementById('warningsContainer').innerHTML =
-      '<div class="alert alert-error"><span class="alert-icon">&#9888;</span><div>Aucun appareil saisi. Retournez a l\'etape 2 pour ajouter vos appareils.</div></div>';
-    document.getElementById('resultsSummary').innerHTML = '';
+    document.getElementById('warningsContainer').innerHTML = '';
+    document.getElementById('resultsSummary').innerHTML = `<div class="empty-state">
+      <svg width="80" height="80" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="10" y="30" width="60" height="35" rx="4" stroke="var(--border)" stroke-width="2" fill="var(--surface-alt)"/>
+        <path d="M20 30l20-16 20 16" stroke="var(--primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+        <rect x="32" y="45" width="16" height="20" rx="2" stroke="var(--text-ter)" stroke-width="2" fill="none"/>
+        <circle cx="40" cy="20" r="6" stroke="var(--accent)" stroke-width="2" fill="none"/>
+        <path d="M37 20h6M40 17v6" stroke="var(--accent)" stroke-width="1.5" stroke-linecap="round"/>
+      </svg>
+      <p class="empty-state-title">Aucun appareil saisi</p>
+      <p class="empty-state-desc">Retournez a l'etape Appareils pour ajouter vos equipements.</p>
+    </div>`;
     document.getElementById('resultsPanels').innerHTML = '';
     document.getElementById('resultsBatteries').innerHTML = '';
     document.getElementById('resultsRegInv').innerHTML = '';
     document.getElementById('resultsProdBar').innerHTML = '';
     return;
   }
-  const input = getInput();
-  state.results = Engine.compute(input);
-  renderResults(state.results, input);
+  showResultsSkeleton();
+  setTimeout(() => {
+    const input = getInput();
+    state.results = Engine.compute(input);
+    renderResults(state.results, input);
+    document.querySelectorAll('#screen-4 .result-card, #screen-4 .section-header, #screen-4 .result-detail-row').forEach((el, i) => {
+      el.classList.add('results-reveal');
+      el.style.animationDelay = (i * 50) + 'ms';
+    });
+  }, 400);
 }
 
 function renderResults(r, input) {
@@ -956,16 +1047,17 @@ function renderResults(r, input) {
   ).join('');
 
   // Summary grid
+  const autoClass = r.realAutonomy >= input.autonomyDays ? 'good' : r.realAutonomy >= input.autonomyDays * 0.8 ? 'ok' : 'bad';
   document.getElementById('resultsSummary').innerHTML = `
-    <div class="result-card highlight">
-      <div class="r-value">${formatNum(r.dailyEnergyKwh, 2)}</div>
-      <div class="r-unit">kWh/j</div>
-      <div class="r-label">Consommation</div>
-    </div>
     <div class="result-card highlight">
       <div class="r-value">${formatNum(r.dailyProduction, 2)}</div>
       <div class="r-unit">kWh/j</div>
       <div class="r-label">Production</div>
+    </div>
+    <div class="result-card highlight-autonomy ${autoClass}">
+      <div class="r-value">${formatNum(r.realAutonomy, 1)}</div>
+      <div class="r-unit">jours</div>
+      <div class="r-label">Autonomie reelle</div>
     </div>
     <div class="result-card">
       <div class="r-value">${r.totalPanels}</div>
@@ -981,24 +1073,24 @@ function renderResults(r, input) {
 
   // Panels detail
   document.getElementById('resultsPanels').innerHTML = `
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:13px;">
+    <div class="detail-grid">
       <div>Puissance crete necessaire</div><div class="text-right fw-700">${formatNum(r.requiredPc, 0)} Wc</div>
       <div>Nombre de panneaux</div><div class="text-right fw-700">${r.totalPanels}</div>
-      <div>En serie</div><div class="text-right">${r.panelsInSeries}</div>
-      <div>Chaines en parallele</div><div class="text-right">${r.stringsInParallel}</div>
+      <div class="detail-secondary">En serie</div><div class="text-right detail-secondary">${r.panelsInSeries}</div>
+      <div class="detail-secondary">Chaines en parallele</div><div class="text-right detail-secondary">${r.stringsInParallel}</div>
       <div>Puissance installee</div><div class="text-right fw-700 color-primary">${formatNum(r.installedPc, 0)} Wc (${formatNum(r.installedPcKw, 2)} kWc)</div>
     </div>`;
 
   // Batteries detail
   document.getElementById('resultsBatteries').innerHTML = `
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:13px;">
+    <div class="detail-grid">
       <div>Capacite necessaire</div><div class="text-right fw-700">${formatNum(r.requiredBatteryCap, 0)} Ah</div>
-      <div>En serie</div><div class="text-right">${r.batteriesInSeries}</div>
-      <div>En parallele</div><div class="text-right">${r.batteriesInParallel}</div>
+      <div class="detail-secondary">En serie</div><div class="text-right detail-secondary">${r.batteriesInSeries}</div>
+      <div class="detail-secondary">En parallele</div><div class="text-right detail-secondary">${r.batteriesInParallel}</div>
       <div>Nombre total</div><div class="text-right fw-700">${r.totalBatteries}</div>
-      <div>Capacite installee</div><div class="text-right">${formatNum(r.installedBatteryCap, 0)} Ah</div>
+      <div class="detail-secondary">Capacite installee</div><div class="text-right detail-secondary">${formatNum(r.installedBatteryCap, 0)} Ah</div>
       <div>Energie utile</div><div class="text-right fw-700 color-primary">${formatNum(r.usableEnergy, 1)} kWh</div>
-      <div>Autonomie reelle</div><div class="text-right">${formatNum(r.realAutonomy, 1)} jours</div>
+      <div class="detail-secondary">Autonomie reelle</div><div class="text-right detail-secondary">${formatNum(r.realAutonomy, 1)} jours</div>
     </div>`;
 
   // Regulator & Inverter
@@ -1031,7 +1123,7 @@ function renderResults(r, input) {
       <div style="border-top:1px solid var(--border);padding-top:6px;">` : '<div>';
 
   document.getElementById('resultsRegInv').innerHTML = `
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:13px;">
+    <div class="detail-grid">
       ${regSection}Puissance continue</div><div class="text-right fw-700" ${isOffgrid ? 'style="border-top:1px solid var(--border);padding-top:6px;"' : ''}>${formatNum(r.inverterContinuous, 0)} W</div>
       <div>Puissance pointe (demarrage)</div><div class="text-right fw-700 color-warn">${formatNum(r.inverterPeak, 0)} W</div>
       <div>${invTypeLabel} recommande</div><div class="text-right fw-700 color-primary">${invLabel}</div>
@@ -1057,6 +1149,21 @@ function renderResults(r, input) {
     </div>`;
 
   renderFormulas(r, input);
+  initScrollReveal();
+}
+
+function initScrollReveal() {
+  const screen4 = document.getElementById('screen-4');
+  if (!screen4) return;
+  screen4.querySelectorAll('.card, .result-grid, .section-title').forEach((el, i) => {
+    el.classList.add('scroll-reveal');
+    el.style.transitionDelay = (i * 60) + 'ms';
+  });
+  const content = document.querySelector('.content');
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+  }, { root: content, threshold: 0.1 });
+  screen4.querySelectorAll('.scroll-reveal').forEach(el => observer.observe(el));
 }
 
 function renderFormulas(r, input) {
@@ -1184,6 +1291,7 @@ function renderCosts(c) {
 
   c.items.forEach((it, i) => {
     const isAccessory = ACCESSORY_KEYS.includes(it.key);
+    if (isAccessory && it.total === 0) return;
     const qtyCell = isAccessory
       ? `<input type="number" class="qty-input" value="${it.qty}" min="0" step="1" onchange="onQtyChange(${i}, this.value)">`
       : `${it.qty}`;
@@ -1304,6 +1412,7 @@ function printPage(htmlContent) {
 function exportPDF() {
   if (!state.results || !state.costs) return;
   printPage(generatePrintHTML());
+  showToast('PDF genere — impression en cours', 'info');
 }
 
 function exportBOM() {
@@ -1360,6 +1469,7 @@ function exportBOM() {
   </body></html>`;
 
   printPage(printContent);
+  showToast('BOM generee — impression en cours', 'info');
 }
 
 function generatePrintHTML() {
@@ -1484,6 +1594,8 @@ function saveState() {
       inverterType: state.inverterType || 'onduleur',
     };
     localStorage.setItem('dimmap_project', JSON.stringify(toSave));
+    const dot = document.getElementById('saveDot');
+    if (dot) { dot.classList.add('pulse'); setTimeout(() => dot.classList.remove('pulse'), 600); }
   } catch (e) {}
 }
 
@@ -1596,6 +1708,44 @@ function resetProject() {
   goToStep(0);
 }
 
+function trapFocus(modalId) {
+  const modal = document.getElementById(modalId);
+  if (!modal) return;
+  const focusable = modal.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
+  if (focusable.length === 0) return;
+  const first = focusable[0];
+  const last = focusable[focusable.length - 1];
+  function handler(e) {
+    if (e.key !== 'Tab') return;
+    if (!modal.classList.contains('show')) { modal.removeEventListener('keydown', handler); return; }
+    if (e.shiftKey) {
+      if (document.activeElement === first) { e.preventDefault(); last.focus(); }
+    } else {
+      if (document.activeElement === last) { e.preventDefault(); first.focus(); }
+    }
+  }
+  modal.addEventListener('keydown', handler);
+  setTimeout(() => first.focus(), 100);
+}
+
+function showToast(msg, type, duration, undoBtn) {
+  const t = document.getElementById('toast');
+  t.innerHTML = '';
+  const span = document.createElement('span');
+  span.textContent = msg;
+  t.appendChild(span);
+  if (undoBtn) {
+    const btn = document.createElement('button');
+    btn.className = 'toast-action';
+    btn.textContent = undoBtn.label;
+    btn.onclick = () => { clearTimeout(t._timer); t.classList.remove('show'); undoBtn.action(); };
+    t.appendChild(btn);
+  }
+  t.className = 'toast ' + (type || '') + ' show';
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => t.classList.remove('show'), duration || 2500);
+}
+
 function closeProject() {
   if (!state.results) return;
   if (!state.costs) {
@@ -1662,6 +1812,7 @@ function closeProject() {
   history.unshift(project);
   if (history.length > 30) history.pop();
   localStorage.setItem('dimmap_history', JSON.stringify(history));
+  showToast('Projet sauvegarde avec succes', 'success');
   resetProject();
   renderProjectHistory();
 }
@@ -1885,10 +2036,22 @@ function exportHistoryPDF(id) {
 }
 
 function deleteFromHistory(id) {
-  if (!confirm('Supprimer ce projet de l\'historique ? Cette action est irreversible.')) return;
-  const history = getProjectHistory().filter(p => p.id !== id);
-  localStorage.setItem('dimmap_history', JSON.stringify(history));
+  const history = getProjectHistory();
+  const removed = history.find(p => p.id === id);
+  const updated = history.filter(p => p.id !== id);
+  localStorage.setItem('dimmap_history', JSON.stringify(updated));
   renderProjectHistory();
+  showToast('Projet supprime', 'warn', 5000, {
+    label: 'Annuler',
+    action: () => {
+      const h = getProjectHistory();
+      h.push(removed);
+      h.sort((a, b) => b.id - a.id);
+      localStorage.setItem('dimmap_history', JSON.stringify(h));
+      renderProjectHistory();
+      showToast('Projet restaure', 'success');
+    }
+  });
 }
 
 function renderProjectHistory() {
@@ -1896,7 +2059,16 @@ function renderProjectHistory() {
   if (!container) return;
   const history = getProjectHistory();
   if (history.length === 0) {
-    container.innerHTML = '<div style="text-align:center;color:var(--text-ter);padding:30px 0;">Aucun projet cloture</div>';
+    container.innerHTML = `<div class="empty-state">
+      <svg width="72" height="72" viewBox="0 0 72 72" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="14" y="12" width="44" height="52" rx="6" stroke="var(--border)" stroke-width="2" fill="var(--surface-alt)"/>
+        <path d="M24 28h24M24 36h18M24 44h12" stroke="var(--text-ter)" stroke-width="2" stroke-linecap="round"/>
+        <circle cx="52" cy="52" r="12" fill="var(--surface)" stroke="var(--primary)" stroke-width="2"/>
+        <path d="M48 52h8M52 48v8" stroke="var(--primary)" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+      <p class="empty-state-title">Aucun projet cloture</p>
+      <p class="empty-state-desc">Les projets calcules apparaitront ici pour consultation.</p>
+    </div>`;
     return;
   }
   container.innerHTML = history.map(p => `<div class="history-item">
@@ -1928,6 +2100,103 @@ function formatPrice(n) {
   return Math.round(n).toLocaleString('fr-FR');
 }
 
+// ═══ DARK MODE ═══
+function getTheme() {
+  return localStorage.getItem('dimmap_theme') || 'auto';
+}
+
+function applyTheme(theme) {
+  if (theme === 'dark') {
+    document.documentElement.setAttribute('data-theme', 'dark');
+  } else if (theme === 'light') {
+    document.documentElement.setAttribute('data-theme', 'light');
+  } else {
+    document.documentElement.removeAttribute('data-theme');
+  }
+  updateThemeUI(theme);
+}
+
+function updateThemeUI(theme) {
+  const icon = document.getElementById('themeIcon');
+  const label = document.getElementById('themeLabel');
+  if (!icon || !label) return;
+  const isDark = theme === 'dark' || (theme === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+  icon.textContent = isDark ? '☀' : '☾';
+  label.textContent = isDark ? 'Mode clair' : 'Mode sombre';
+}
+
+function toggleTheme() {
+  const current = getTheme();
+  const isDark = current === 'dark' || (current === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+  const next = isDark ? 'light' : 'dark';
+  localStorage.setItem('dimmap_theme', next);
+  applyTheme(next);
+  closeDrawer();
+  showToast(next === 'dark' ? 'Mode sombre active' : 'Mode clair active', 'info');
+}
+
+// ═══ SCROLL INDICATOR ═══
+function updateScrollIndicator() {
+  const content = document.querySelector('.content');
+  const indicator = document.getElementById('scrollIndicator');
+  if (!content || !indicator) return;
+  const scrollable = content.scrollHeight - content.clientHeight;
+  const scrolled = content.scrollTop;
+  const nearBottom = scrollable > 50 && scrolled < scrollable - 60;
+  indicator.classList.toggle('visible', nearBottom);
+}
+
+function smoothScrollDown() {
+  const content = document.querySelector('.content');
+  if (content) content.scrollBy({ top: 300, behavior: 'smooth' });
+}
+
+// ═══ MODAL BOTTOM SHEET ═══
+function closeModalAnimated(id) {
+  const overlay = document.getElementById(id);
+  overlay.classList.add('closing');
+  overlay.addEventListener('animationend', function handler() {
+    overlay.classList.remove('show', 'closing');
+    overlay.removeEventListener('animationend', handler);
+  });
+}
+
+(function initModalSwipe() {
+  document.addEventListener('touchstart', function(e) {
+    const modal = e.target.closest('.modal');
+    if (!modal) return;
+    const overlay = modal.closest('.modal-overlay');
+    if (!overlay) return;
+    const startY = e.touches[0].clientY;
+    let dy = 0;
+    function onMove(e2) {
+      dy = e2.touches[0].clientY - startY;
+      if (dy > 0 && modal.scrollTop <= 0) {
+        modal.style.transform = 'translateY(' + dy + 'px)';
+        e2.preventDefault();
+      }
+    }
+    function onEnd() {
+      document.removeEventListener('touchmove', onMove);
+      document.removeEventListener('touchend', onEnd);
+      if (dy > 100) {
+        modal.style.transform = '';
+        overlay.classList.add('closing');
+        overlay.addEventListener('animationend', function h() {
+          overlay.classList.remove('show', 'closing');
+          overlay.removeEventListener('animationend', h);
+        });
+      } else {
+        modal.style.transition = 'transform 200ms ease';
+        modal.style.transform = '';
+        setTimeout(() => { modal.style.transition = ''; }, 200);
+      }
+    }
+    document.addEventListener('touchmove', onMove, { passive: false });
+    document.addEventListener('touchend', onEnd);
+  }, { passive: true });
+})();
+
 // ═══ INIT ═══
 function init() {
   populateCountries();
@@ -1936,6 +2205,32 @@ function init() {
   updateNavButtons();
   selectInstallType(state.installationType);
   renderProjectHistory();
+  applyTheme(getTheme());
+
+  const content = document.querySelector('.content');
+  if (content) {
+    content.addEventListener('scroll', updateScrollIndicator, { passive: true });
+  }
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+    if (getTheme() === 'auto') updateThemeUI('auto');
+  });
+
+  ['customAppName','customAppPower','customAppHours'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('blur', () => clearFieldError(id));
+  });
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') {
+      const openModal = document.querySelector('.modal-overlay.show');
+      if (openModal) {
+        const id = openModal.id;
+        if (id) closeModalAnimated(id);
+      }
+      const drawer = document.getElementById('navDrawer');
+      if (drawer && drawer.classList.contains('open')) toggleDrawer();
+    }
+  });
 }
 
 init();

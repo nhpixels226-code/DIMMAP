@@ -9,7 +9,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <link rel="apple-touch-icon" href="icons/icon-192.png">
-  <link rel="stylesheet" href="css/style.css?v=37">
+  <link rel="stylesheet" href="css/style.css?v=46">
 </head>
 <body>
 <div class="app" id="app">
@@ -25,17 +25,33 @@
         <button id="btnSimple" class="active" onclick="setMode('simple')">Standard</button>
         <button id="btnExpert" onclick="setMode('expert')">Expert</button>
       </div>
+      <div class="mode-badge" id="modeBadge" hidden>&#9733; Expert</div>
     </div>
   </header>
 
-  <!-- ═══ STEPPER ═══ -->
-  <nav class="stepper" id="stepper">
-    <div class="step-dot active" data-step="0"><div class="dot">1</div><div class="step-label">Accueil</div></div>
-    <div class="step-dot" data-step="1"><div class="dot">2</div><div class="step-label">Appareils</div></div>
-    <div class="step-dot" data-step="2"><div class="dot">3</div><div class="step-label">Site</div></div>
-    <div class="step-dot" data-step="3"><div class="dot">4</div><div class="step-label">Equipement</div></div>
-    <div class="step-dot" data-step="4"><div class="dot">5</div><div class="step-label">Resultats</div></div>
-    <div class="step-dot" data-step="5"><div class="dot">6</div><div class="step-label">Couts</div></div>
+  <!-- ═══ STEP INDICATOR (compact) ═══ -->
+  <div class="step-indicator" id="stepIndicator" onclick="toggleDrawer()">
+    <div class="step-indicator-dot" id="stepIndDot">1</div>
+    <div class="step-indicator-label" id="stepIndLabel">Accueil</div>
+    <div id="saveDot" class="save-dot"></div>
+    <div class="step-indicator-arrow">&#9662;</div>
+    <div class="step-progress" id="stepProgress" style="width: 16.67%"></div>
+  </div>
+
+  <!-- ═══ NAV DRAWER ═══ -->
+  <div class="drawer-overlay" id="drawerOverlay" onclick="closeDrawer()"></div>
+  <nav class="nav-drawer" id="navDrawer">
+    <div class="drawer-header">Etapes</div>
+    <div class="drawer-step active" data-step="0"><div class="drawer-dot"><span class="step-icon">☀</span></div><span>Accueil</span></div>
+    <div class="drawer-step" data-step="1"><div class="drawer-dot"><span class="step-icon">⚡</span></div><span>Appareils</span></div>
+    <div class="drawer-step" data-step="2"><div class="drawer-dot"><span class="step-icon">◎</span></div><span>Site</span></div>
+    <div class="drawer-step" data-step="3"><div class="drawer-dot"><span class="step-icon">⚙</span></div><span>Equipement</span></div>
+    <div class="drawer-step" data-step="4"><div class="drawer-dot"><span class="step-icon">▣</span></div><span>Resultats</span></div>
+    <div class="drawer-step" data-step="5"><div class="drawer-dot"><span class="step-icon">¤</span></div><span>Couts</span></div>
+    <div class="drawer-theme-toggle" onclick="toggleTheme()">
+      <div class="theme-icon" id="themeIcon">&#9790;</div>
+      <span id="themeLabel">Mode sombre</span>
+    </div>
   </nav>
 
   <!-- ═══ CONTENT ═══ -->
@@ -82,7 +98,7 @@
           + Ajouter un appareil
         </button>
       </div>
-      <div class="summary-bar" id="energySummary">
+      <div class="summary-bar summary-highlight" id="energySummary">
         <div>
           <div class="label">Consommation journaliere</div>
         </div>
@@ -130,7 +146,7 @@
         </div>
         <div class="form-group expert-only mt-8">
           <label class="form-label">HSP personnalise (kWh/m²/j)</label>
-          <input type="number" id="customHSP" step="0.1" min="1" max="8" placeholder="Laisser vide = auto">
+          <div class="input-suffix"><input type="number" id="customHSP" step="0.1" min="1" max="8" inputmode="decimal" placeholder="Auto"><span class="suffix">kWh/m²/j</span></div>
         </div>
       </div>
 
@@ -238,16 +254,16 @@
           <div class="section-title">Parametres batterie</div>
           <div class="input-row">
             <div class="form-group">
-              <label class="form-label">DoD (%)</label>
-              <input type="number" id="batteryDoD" value="80" step="5" min="20" max="100">
+              <label class="form-label">DoD</label>
+              <div class="input-suffix"><input type="number" id="batteryDoD" value="80" step="5" min="20" max="100" inputmode="numeric"><span class="suffix">%</span></div>
             </div>
             <div class="form-group">
-              <label class="form-label">Efficacite (%)</label>
-              <input type="number" id="batteryEff" value="95" step="1" min="70" max="99">
+              <label class="form-label">Efficacite</label>
+              <div class="input-suffix"><input type="number" id="batteryEff" value="95" step="1" min="70" max="99" inputmode="numeric"><span class="suffix">%</span></div>
             </div>
             <div class="form-group">
-              <label class="form-label">Duree vie (ans)</label>
-              <input type="number" id="batteryLife" value="10" step="1" min="1" max="25">
+              <label class="form-label">Duree vie</label>
+              <div class="input-suffix"><input type="number" id="batteryLife" value="10" step="1" min="1" max="25" inputmode="numeric"><span class="suffix">ans</span></div>
             </div>
           </div>
         </div>
@@ -274,8 +290,7 @@
     <!-- ── ECRAN 4: RESULTATS ── -->
     <div class="screen" id="screen-4">
       <div id="warningsContainer"></div>
-
-      <div class="section-title">Synthese</div>
+      <div class="section-title" style="margin-top:var(--spacing-sm)">Synthese</div>
       <div class="result-grid" id="resultsSummary"></div>
 
       <div class="section-title">Panneaux solaires</div>
@@ -298,20 +313,22 @@
 
     <!-- ── ECRAN 5: COUTS ── -->
     <div class="screen" id="screen-5">
+      <div class="result-grid" id="costIndicators"></div>
+
       <div class="card expert-only mb-8">
         <div class="card-title">Frais annexes (%)</div>
         <div class="input-row">
           <div class="form-group">
             <label class="form-label">Main d'oeuvre</label>
-            <input type="number" id="moPercent" value="15" step="1" min="0" max="50" onchange="runCostCalculation()">
+            <div class="input-suffix"><input type="number" id="moPercent" value="15" step="1" min="0" max="50" inputmode="numeric" onchange="runCostCalculation()"><span class="suffix">%</span></div>
           </div>
           <div class="form-group">
             <label class="form-label">Transport</label>
-            <input type="number" id="transportPercent" value="3" step="1" min="0" max="30" onchange="runCostCalculation()">
+            <div class="input-suffix"><input type="number" id="transportPercent" value="3" step="1" min="0" max="30" inputmode="numeric" onchange="runCostCalculation()"><span class="suffix">%</span></div>
           </div>
           <div class="form-group">
             <label class="form-label">Imprevus</label>
-            <input type="number" id="contingencyPercent" value="5" step="1" min="0" max="30" onchange="runCostCalculation()">
+            <div class="input-suffix"><input type="number" id="contingencyPercent" value="5" step="1" min="0" max="30" inputmode="numeric" onchange="runCostCalculation()"><span class="suffix">%</span></div>
           </div>
         </div>
       </div>
@@ -320,15 +337,15 @@
         <div class="input-row">
           <div class="form-group">
             <label class="form-label">Vie systeme (ans)</label>
-            <input type="number" id="systemLifeYears" value="20" step="1" min="5" max="40" onchange="runCostCalculation()">
+            <div class="input-suffix"><input type="number" id="systemLifeYears" value="20" step="1" min="5" max="40" inputmode="numeric" onchange="runCostCalculation()"><span class="suffix">ans</span></div>
           </div>
           <div class="form-group">
-            <label class="form-label">Vie onduleur (ans)</label>
-            <input type="number" id="inverterLifeYears" value="10" step="1" min="3" max="25" onchange="runCostCalculation()">
+            <label class="form-label">Vie onduleur</label>
+            <div class="input-suffix"><input type="number" id="inverterLifeYears" value="10" step="1" min="3" max="25" inputmode="numeric" onchange="runCostCalculation()"><span class="suffix">ans</span></div>
           </div>
           <div class="form-group">
-            <label class="form-label">Vie regulateur (ans)</label>
-            <input type="number" id="regulatorLifeYears" value="15" step="1" min="3" max="25" onchange="runCostCalculation()">
+            <label class="form-label">Vie regulateur</label>
+            <div class="input-suffix"><input type="number" id="regulatorLifeYears" value="15" step="1" min="3" max="25" inputmode="numeric" onchange="runCostCalculation()"><span class="suffix">ans</span></div>
           </div>
         </div>
       </div>
@@ -342,16 +359,18 @@
 
       <div id="costProjection"></div>
 
-      <div class="section-title">Indicateurs</div>
-      <div class="result-grid" id="costIndicators"></div>
-
-      <div style="display:flex;gap:8px;margin-top:16px;">
-        <button class="btn btn-secondary" style="flex:1;" onclick="exportBOM()">Exporter BOM</button>
-        <button class="btn btn-close-project" style="flex:1;" onclick="closeProject()">Cloturer le projet</button>
+      <div class="cost-actions">
+        <button class="btn btn-close-project" onclick="closeProject()">Cloturer le projet</button>
+        <button class="btn btn-outline-sm" onclick="exportBOM()">Exporter BOM fournisseur</button>
       </div>
     </div>
 
   </main>
+
+  <!-- ═══ SCROLL INDICATOR ═══ -->
+  <div class="scroll-indicator" id="scrollIndicator" onclick="smoothScrollDown()">
+    <div class="scroll-indicator-arrow">&#9662;</div>
+  </div>
 
   <!-- ═══ BOTTOM NAV ═══ -->
   <div class="bottom-nav">
@@ -373,20 +392,20 @@
     <div style="margin-top:16px; padding-top:12px; border-top:1px solid var(--border);">
       <div class="modal-title" style="font-size:14px; margin-bottom:10px;">Appareil personnalise</div>
       <div class="form-group">
-        <input type="text" id="customAppName" placeholder="Nom de l'appareil">
+        <input type="text" id="customAppName" placeholder="Ex: Climatiseur, Pompe...">
       </div>
       <div class="input-row-3 mt-8">
         <div class="form-group">
-          <label class="form-label">Puissance (W)</label>
-          <input type="number" id="customAppPower" min="1" placeholder="W">
+          <label class="form-label">Puissance</label>
+          <div class="input-suffix"><input type="number" id="customAppPower" min="1" inputmode="numeric" placeholder="Ex: 65"><span class="suffix">W</span></div>
         </div>
         <div class="form-group">
           <label class="form-label">Quantite</label>
-          <input type="number" id="customAppQty" value="1" min="1">
+          <div class="input-suffix"><input type="number" id="customAppQty" value="1" min="1" inputmode="numeric"><span class="suffix">pcs</span></div>
         </div>
         <div class="form-group">
           <label class="form-label">Heures/jour</label>
-          <input type="number" id="customAppHours" min="0.1" max="24" step="0.5" placeholder="h">
+          <div class="input-suffix"><input type="number" id="customAppHours" min="0.1" max="24" step="0.5" inputmode="decimal" placeholder="Ex: 8"><span class="suffix">h/j</span></div>
         </div>
       </div>
       <div class="form-group mt-8">
@@ -441,9 +460,11 @@
   </div>
 </div>
 
-<script src="js/data.js?v=37"></script>
-<script src="js/engine.js?v=37"></script>
-<script src="js/app.js?v=37"></script>
+<div class="toast" id="toast"></div>
+
+<script src="js/data.js?v=41"></script>
+<script src="js/engine.js?v=41"></script>
+<script src="js/app.js?v=46"></script>
 <script>if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');</script>
 </body>
 </html>
