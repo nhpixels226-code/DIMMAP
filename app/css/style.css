@@ -146,9 +146,15 @@ body {
   font-size: var(--font-size-3xl);
   font-weight: 800;
   letter-spacing: 0.8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 .app-header .logo span {
   color: var(--accent);
+}
+.logo-icon {
+  flex-shrink: 0;
 }
 .app-header .subtitle {
   font-family: var(--font);
